@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Trading Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: oklch(14.1% .005 285.823); --fg: oklch(98.5% 0 0); --card: oklch(21% .006 285.885); --primary: oklch(85% 0.15 290); --primary-fg: oklch(14.1% .005 285.823); --secondary: oklch(27.4% .006 286.033); --muted: oklch(27.4% .006 286.033); --muted-fg: oklch(70.5% .015 286.067); --border: oklch(100% 0 0/.1); --destructive: oklch(70.4% .191 22.216); --success: oklch(72.3% .219 149.579); --r: 0.4rem; --s: 0.25rem; }
+body { font-family: 'Silkscreen', 'Courier New', monospace; background: var(--bg); color: var(--fg); overflow-x: hidden; font-weight: 400; font-size: 14px; }
+.container { max-width: 1800px; margin: 0 auto; padding: calc(var(--s) * 3); min-height: 100vh; }
+.header { background: linear-gradient(135deg, var(--card), var(--bg)); padding: calc(var(--s) * 3); border-radius: var(--r); margin-bottom: calc(var(--s) * 3); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--success)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-nav { display: flex; gap: calc(var(--s) * 2); }
+.nav-tab { padding: calc(var(--s) * 1.5) calc(var(--s) * 3); background: var(--card); border: 1px solid var(--border); border-radius: calc(var(--r) - 2px); color: var(--fg); text-decoration: none; font-size: 0.7rem; font-weight: 700; transition: all 0.2s ease; }
+.nav-tab:hover { border-color: var(--primary); background: var(--primary); color: var(--primary-fg); transform: translateY(-1px); }
+select, button { padding: calc(var(--s) * 1.5) calc(var(--s) * 2.5); border: 1px solid var(--border); background: var(--card); color: var(--fg); border-radius: calc(var(--r) - 2px); font-size: 0.7rem; transition: all 0.2s ease; font-family: 'Silkscreen', 'Courier New', monospace; }
+select:hover, select:focus { border-color: var(--primary); outline: none; }
+button { cursor: pointer; background: var(--primary); color: var(--primary-fg); border: none; font-weight: 700; }
+button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .stats-section { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(var(--s) * 3); margin-bottom: calc(var(--s) * 3); }
+        .stat-card { background: linear-gradient(145deg, var(--card), var(--muted)); padding: calc(var(--s) * 1.5); border-radius: var(--r); border: 1px solid var(--border); display: flex; align-items: center; gap: var(--s); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .stat-icon { width: calc(var(--s) * 5); height: calc(var(--s) * 5); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: var(--muted-fg); background: oklch(12% .003 285.823); border-radius: var(--r); flex-shrink: 0; opacity: 0.7; background-size: cover; background-repeat: no-repeat; background-position: center; }
+        .stat-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--r); }
+        .stat-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .stat-label { font-size: 0.5rem; color: var(--muted-fg); margin-bottom: calc(var(--s) * 0.25); text-transform: uppercase; }
+        .stat-value-container { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s); }
+        .stat-value { font-size: 0.8rem; font-weight: 700; color: var(--fg); }
+        .stat-change { font-size: 0.6rem; }
+        .stat-change.positive { color: var(--success); }
+        .stat-change.negative { color: var(--destructive); }
+        .trading-layout { display: grid; grid-template-columns: 280px 1fr 260px; gap: calc(var(--s) * 3); margin-bottom: calc(var(--s) * 3); align-items: start; min-height: calc(100vh - 220px); }
+        .panel { background: linear-gradient(145deg, var(--card), var(--bg)); border-radius: var(--r); padding: calc(var(--s) * 2.5); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: calc(var(--s) * 2); border-bottom: 1px solid var(--border); padding-bottom: calc(var(--s) * 2); }
+        .panel-title { font-size: 1rem; font-weight: 700; }
+        .custom-dropdown { position: relative; }
+        .type-selector { padding: calc(var(--s) * 1) calc(var(--s) * 1.5); border: 1px solid var(--border); background: var(--card); color: var(--fg); border-radius: calc(var(--r) - 2px); font-size: 0.65rem; font-family: 'Silkscreen', 'Courier New', monospace; font-weight: 700; transition: all 0.2s ease; min-width: 120px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .type-selector:hover { border-color: var(--primary); }
+        .dropdown-arrow { font-size: 0.5rem; color: var(--muted-fg); transition: transform 0.2s ease; }
+        .type-selector.open .dropdown-arrow { transform: rotate(180deg); }
+        .dropdown-menu { position: absolute; top: 100%; left: 0; right: 0; background: var(--card); border: 1px solid var(--border); border-radius: calc(var(--r) - 2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; max-height: 200px; overflow-y: auto; display: none; }
+        .dropdown-item { padding: calc(var(--s) * 1) calc(var(--s) * 1.5); font-size: 0.65rem; font-family: 'Silkscreen', 'Courier New', monospace; font-weight: 400; color: var(--fg); cursor: pointer; transition: background 0.2s ease; }
+        .dropdown-item:hover { background: var(--muted); }
+        .dropdown-item.selected { background: var(--primary); color: var(--primary-fg); font-weight: 700; }
+        .market-search { width: 100%; padding: calc(var(--s) * 2); background: var(--bg); border: 1px solid var(--border); border-radius: calc(var(--r) - 2px); color: var(--fg); font-size: 0.75rem; margin-bottom: calc(var(--s) * 2); font-family: 'Silkscreen', 'Courier New', monospace; }
+        .market-list { height: calc(100vh - 280px); overflow-y: auto; }
+        .market-item { padding: calc(var(--s) * 1.5); cursor: pointer; border-radius: calc(var(--r) - 2px); margin-bottom: calc(var(--s) * 0.5); transition: background-color 0.2s ease; border-left: 3px solid transparent; display: flex; justify-content: space-between; align-items: center; }
+        .market-item:hover { background: var(--muted); }
+        .market-item.active { background: var(--muted); color: var(--fg); border-left-color: var(--primary); }
+        .market-item-name { font-weight: 400; font-size: 0.7rem; }
+        .market-item-details { display: flex; gap: calc(var(--s) * 1.5); align-items: center; font-size: 0.65rem; flex-shrink: 0; }
+        .market-item-icon { width: calc(var(--s) * 5); height: calc(var(--s) * 5); margin-right: calc(var(--s) * 1.5); border-radius: calc(var(--r) - 2px); flex-shrink: 0; background: var(--muted); overflow: hidden; background-size: cover; background-repeat: no-repeat; background-position: center; border: 1px solid var(--border); }
+        .market-item-content { display: flex; align-items: center; min-width: 0; flex: 1; overflow: hidden; }
+        .market-change { padding: calc(var(--s) * 0.5) var(--s); border-radius: calc(var(--r) - 2px); font-weight: 400; font-size: 0.7rem; font-family: 'Silkscreen', 'Courier New', monospace; }
+        .market-change.positive { background: rgba(72, 187, 120, 0.2); color: var(--success); } 
+        .market-change.negative { background: rgba(239, 68, 68, 0.2); color: var(--destructive); } 
+        .market-change.neutral { background: var(--muted); color: var(--muted-fg); }
+        .chart-controls { display: flex; gap: var(--s); align-items: center; }
+        .chart-type-btn { padding: calc(var(--s) * 1.5) calc(var(--s) * 2); background: var(--bg); border: 1px solid var(--border); border-radius: calc(var(--r) - 2px); font-size: 0.65rem; cursor: pointer; transition: all 0.2s ease; color: var(--muted-fg); font-weight: 700; }
+        .chart-type-btn:hover { background: var(--muted); color: var(--fg); }
+        .chart-type-btn.active { background: rgba(255, 255, 255, 0.1); color: var(--fg); border-color: rgba(255, 255, 255, 0.2); }
+        .refresh-btn { width: calc(var(--s) * 6); height: calc(var(--s) * 6); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease; color: var(--muted-fg); font-size: 0.8rem; padding: 0; }
+        .refresh-btn:hover { background: var(--muted); color: var(--fg); transform: rotate(180deg); }
+        #chart { width: 100%; height: 400px; border-radius: var(--r); position: relative; border: 1px solid var(--border); margin-bottom: calc(var(--s) * 2); box-sizing: border-box; }
+        .chart-header-controls { display: flex; justify-content: space-between; align-items: center; gap: calc(var(--s) * 2); margin-bottom: calc(var(--s) * 2); }
+        .chart-left-controls { display: flex; align-items: center; gap: calc(var(--s) * 2); }
+        .timeframe-controls, .currency-controls { display: flex; gap: var(--s); }
+        .timeframe-controls select { padding: calc(var(--s) * 1.5) calc(var(--s) * 2); border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: calc(var(--r) - 2px); font-size: 0.65rem; }
+        .chart-title-container { display: flex; align-items: center; gap: calc(var(--s) * 1.5); }
+        .chart-item-icon { width: calc(var(--s) * 6); height: calc(var(--s) * 6); border-radius: calc(var(--r) - 2px); background: var(--muted); overflow: hidden; background-size: cover; background-repeat: no-repeat; background-position: center; border: 1px solid var(--border); flex-shrink: 0; }
+        .chart-trades { height: calc(100vh - 580px); min-height: 200px; overflow-y: auto; }
+        .last-trades-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+        .last-trades-table th { text-align: left; padding: calc(var(--s) * 1.5); font-size: 0.6rem; color: var(--muted-fg); border-bottom: 1px solid var(--border); font-weight: 700; text-transform: uppercase; }
+        .last-trades-table td { padding: var(--s) calc(var(--s) * 1.5); font-size: 0.7rem; border-bottom: 1px solid var(--border); }
+        .last-trades-table tbody tr:hover { background: var(--muted); }
+        .chart-trades .last-trades-table { font-size: 0.65rem; }
+        .chart-trades .last-trades-table th { padding: calc(var(--s) * 0.75); font-size: 0.55rem; }
+        .chart-trades .last-trades-table td { padding: calc(var(--s) * 0.5) calc(var(--s) * 0.75); font-size: 0.65rem; }
+        .trade-time, .trade-buyer, .trade-hash, .trade-price, .trade-amount { font-family: 'Silkscreen', 'Courier New', monospace; }
+        .trade-time { color: var(--muted-fg); font-size: 0.65rem; }
+        .trade-price { color: var(--destructive); font-weight: 400; text-align: right; }
+        .trade-amount { color: var(--fg); text-align: right; }
+        .trade-buyer { color: var(--success); font-size: 0.65rem; }
+        .trade-hash { color: var(--primary); font-size: 0.65rem; }
+        .trade-hash a { color: var(--primary); text-decoration: none; }
+        .trade-hash a:hover { text-decoration: underline; }
+        .orderbook-section { margin-top: calc(var(--s) * 2); }
+        .orderbook-table { width: 100%; border-collapse: collapse; font-size: 0.6rem; }
+        .orderbook-table th { text-align: right; padding: calc(var(--s) * 0.5); font-size: 0.5rem; color: var(--muted-fg); border-bottom: 1px solid var(--border); font-weight: 700; text-transform: uppercase; }
+        .orderbook-table td { text-align: right; padding: calc(var(--s) * 0.4) calc(var(--s) * 0.5); font-size: 0.6rem; border-bottom: 1px solid var(--border); }
+        .orderbook-table tbody tr { position: relative; }
+        .orderbook-table td > span { position: relative; z-index: 1; }
+        .orderbook-table tbody tr:hover { background-image: none !important; background-color: var(--muted) !important; }
+        .price-col { color: var(--destructive); }
+        .amount-col { color: var(--fg); }
+        .qty-col { color: var(--muted-fg); } /* Grey color for Qty column */
+        .total-col { color: var(--success); }
+        .orderbook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--s); border-bottom: 1px solid var(--border); padding-bottom: var(--s); }
+        .trading-section { background: linear-gradient(135deg, var(--bg), var(--muted)); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: calc(var(--s) * 2); }
+        .trading-tabs { display: flex; background: var(--card); }
+        .trading-tab { flex: 1; padding: var(--s) calc(var(--s) * 1.5); background: transparent; border: none; cursor: pointer; transition: all 0.2s ease; font-size: 0.6rem; font-weight: 700; color: var(--muted-fg); }
+        .trading-tab.active { background: var(--bg); color: var(--fg); }
+        .trading-content { padding: calc(var(--s) * 1.5); }
+        .trading-form { display: flex; flex-direction: column; gap: var(--s); }
+        .form-section { display: flex; flex-direction: column; gap: var(--s); }
+        .form-group { display: flex; flex-direction: column; gap: calc(var(--s) * 0.5); }
+        .form-group label { font-size: 0.45rem; color: var(--muted-fg); text-transform: uppercase; font-weight: 700; }
+        .form-input { padding: var(--s); background: var(--card); border: 1px solid var(--border); border-radius: calc(var(--r) - 2px); color: var(--fg); font-size: 0.6rem; font-family: 'Silkscreen', 'Courier New', monospace; }
+        .range-slider { -webkit-appearance: none; width: 100%; height: calc(var(--s) * 1.5); border-radius: var(--r); background: var(--muted); outline: none; margin: calc(var(--s) * 0.5) 0; }
+        .range-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: calc(var(--s) * 3); height: calc(var(--s) * 3); border-radius: 50%; background: var(--primary); cursor: pointer; border: 2px solid var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .range-limits { display: flex; justify-content: space-between; font-size: 0.55rem; color: var(--muted-fg); }
+        .price-info { background: linear-gradient(135deg, var(--muted), var(--bg)); padding: var(--s); border-radius: var(--r); border: 1px solid var(--border); }
+        .price-info-row { display: flex; justify-content: space-between; margin-bottom: calc(var(--s) * 0.5); font-size: 0.6rem; }
+        .price-info-total { font-weight: 700; border-top: 1px solid var(--border); padding-top: calc(var(--s) * 0.75); margin-top: calc(var(--s) * 0.75); font-size: 0.65rem; }
+        .trade-button { padding: calc(var(--s) * 1.25); font-weight: 700; border-radius: var(--r); border: none; cursor: pointer; transition: all 0.2s ease; font-size: 0.65rem; text-transform: uppercase; }
+        .buy-button { background: var(--success); color: var(--primary-fg); }
+        .sell-button { background: var(--destructive); color: var(--primary-fg); }
+        .trade-button:hover { transform: translateY(-2px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        #biggest-trade-ticker { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: calc(var(--s) * 2); margin-bottom: calc(var(--s) * 3); font-size: 0.8rem; text-align: center; overflow: hidden; white-space: nowrap; position: relative; display: flex; align-items: center; justify-content: center; }
+        .live-indicator { position: absolute; left: calc(var(--s) * 2); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: var(--s); font-size: 0.65rem; }
+        .live-dot { width: calc(var(--s) * 1.5); height: calc(var(--s) * 1.5); border-radius: 50%; background: var(--success); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); } 50% { box-shadow: 0 0 0 4px rgba(72, 187, 120, 0); } }
+        #ticker-content { display: inline-block; animation: fade-in-out 5s ease-in-out infinite; }
+        #ticker-content .ticker-icon { width: calc(var(--s) * 4); height: calc(var(--s) * 4); vertical-align: middle; margin-right: var(--s); border-radius: 2px; }
+        #ticker-content .text-success { color: var(--success); }
+        #ticker-content .text-danger { color: var(--destructive); }
+        #ticker-content .muted { color: var(--muted-fg); }
+        @keyframes fade-in-out { 0% { opacity: 0; transform: translateY(10px); } 20% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
+        @media (max-width: 1400px) { .trading-layout { grid-template-columns: 1fr; } .stats-section { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) { .stats-section { grid-template-columns: repeat(2, 1fr); } .container { padding: calc(var(--s) * 2); } }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: var(--r); }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>Trading Dashboard</h1>
+    <div class="header-nav">
+        <a href="page_2.html" class="nav-tab">global stat</a>
+    </div>
+</div>
+<div id="biggest-trade-ticker">
+<div class="live-indicator"><div class="live-dot"></div><span>LIVE</span></div>
+<span id="ticker-content">Loading biggest trades...</span>
+</div>
+<div class="stats-section">
+<div class="stat-card"><div class="stat-icon" id="statIcon1">💰</div><div class="stat-content"><div class="stat-label">24h Item Volume</div><div class="stat-value-container"><div class="stat-value" id="totalVolumeValue">-</div><div class="stat-change" id="statVolumeChange"></div></div></div></div>
+<div class="stat-card"><div class="stat-icon" id="statIcon2">📊</div><div class="stat-content"><div class="stat-label">24h Item Sold</div><div class="stat-value-container"><div class="stat-value" id="itemVolumeChange">-</div><div class="stat-change" id="statItemVolumeChange"></div></div></div></div>
+<div class="stat-card"><div class="stat-icon" id="statIcon3">📈</div><div class="stat-content"><div class="stat-label">Price Range</div><div class="stat-value-container"><div class="stat-value" id="priceRange">-</div><div class="stat-change" id="statPriceRangeChange"></div></div></div></div>
+<div class="stat-card"><div class="stat-icon">📦</div><div class="stat-content"><div class="stat-label">Supply</div><div class="stat-value-container"><div class="stat-value" id="itemSupply">-</div><div class="stat-change" id="statSupplyChange"></div></div></div></div>
+<div class="stat-card"><div class="stat-icon">📊</div><div class="stat-content"><div class="stat-label">24h Total Market Volume</div><div class="stat-value-container"><div class="stat-value" id="totalMarketVolume">-</div><div class="stat-change" id="statMarketVolumeChange"></div></div></div></div>
+
+</div>
+        <div class="trading-layout">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Markets</div>
+                    <div class="custom-dropdown">
+                        <div id="typeSelector" class="type-selector" data-value="">
+                            <span class="selected-text">All Types</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div id="typeDropdown" class="dropdown-menu">
+                            <div class="dropdown-item" data-value="">All Types</div>
+                        </div>
+                    </div>
+                </div>
+                <input type="text" id="marketSearch" class="market-search" placeholder="Search items...">
+                <div class="market-list" id="marketList"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="chart-title-container"><div class="chart-item-icon" id="chartItemIcon"></div><div class="panel-title" id="chartPanelTitle">Price Chart</div></div>
+                    <div class="chart-header-controls">
+                        <div class="chart-left-controls">
+                            <div class="timeframe-controls"><select id="timeframeSelect"><option value="1h">1H</option><option value="4h">4H</option><option value="1d" selected>1D</option></select></div>
+                            <div class="currency-controls"><div id="currencySelector" class="chart-controls"><button class="chart-type-btn" data-currency="ETH">ETH</button><button class="chart-type-btn active" data-currency="USD">USD</button></div></div>
+                        </div>
+                        <div class="chart-controls">
+                            <button class="chart-type-btn" data-type="candlestick">Candles</button>
+                            <button class="chart-type-btn active" data-type="line">Line</button>
+                            <button class="refresh-btn" onclick="refreshChart()" title="Refresh Chart">↻</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="chart"></div>
+                <div class="panel-header" style="margin-top: calc(var(--s) * 3); margin-bottom: calc(var(--s) * 2);"><div class="panel-title">Recent Trades</div></div>
+                <div class="chart-trades">
+                    <table class="last-trades-table">
+                        <thead><tr><th>Time</th><th style="text-align: center;">Amount</th><th style="text-align: right;">Price</th><th style="text-align: right;">Total</th><th style="text-align: center;">Buyer</th><th style="text-align: center;">Tx</th></tr></thead>
+                        <tbody id="chartTradesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="trading-section">
+                    <div class="trading-tabs"><div class="trading-tab active" data-tab="buy">Buy</div><div class="trading-tab" data-tab="sell">Sell</div></div>
+                    <div class="trading-content">
+                        <div id="buyTab" class="trading-form">
+                            <div class="form-section">
+                                <div class="form-group"><label>Amount to Buy</label><input type="number" id="buyAmountInput" class="form-input" placeholder="1" min="1" max="3000" value="1" step="1"><div><input type="range" class="range-slider" id="buyAmountSlider" min="1" max="3000" value="1" step="1"><div class="range-limits"><span>1</span><span>3000</span></div></div></div>
+                                <div class="price-info"><div class="price-info-row"><span class="price-info-label">Item:</span><span class="price-info-value" id="buyItemName">Select item</span></div><div class="price-info-row price-info-total"><span class="price-info-label">Total Cost:</span><span class="price-info-value" id="buyTotalCost">-</span></div></div>
+                            </div>
+                            <button class="trade-button buy-button" onclick="executeBuy()">Buy Items</button>
+                        </div>
+                        <div id="sellTab" class="trading-form" style="display: none;">
+                            <div class="form-section">
+                                <div class="form-group"><label>Price per Item</label><input type="number" id="sellPrice" class="form-input" placeholder="0.001" step="0.000001" min="0"></div>
+                                <div class="form-group"><label>Amount to Sell</label><input type="number" id="sellAmountInput" class="form-input" placeholder="1" min="1" max="3000" value="1" step="1"><div><input type="range" class="range-slider" id="sellAmountSlider" min="1" max="3000" value="1" step="1"><div class="range-limits"><span>1</span><span>3000</span></div></div></div>
+                                <div class="price-info"><div class="price-info-row"><span class="price-info-label">Item:</span><span class="price-info-value" id="sellItemName">Select item</span></div><div class="price-info-row"><span class="price-info-label">Your Balance:</span><span class="price-info-value" id="sellBalance">-</span></div><div class="price-info-row price-info-total"><span class="price-info-label">Total Receive:</span><span class="price-info-value" id="sellTotalReceive">-</span></div></div>
+                            </div>
+                            <button class="trade-button sell-button" onclick="executeSell()">List for Sale</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="orderbook-section">
+                    <div class="orderbook-header"><div class="panel-title">Order Book</div></div>
+                    <table class="orderbook-table">
+                        <thead><tr><th class="price-col">Price</th><th class="amount-col">Amount</th><th class="qty-col">Qty</th><th class="total-col">Total</th></tr></thead>
+                        <tbody id="orderbookBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+    <script>
+        let chart, candlestickSeries, lineSeries, volumeSeries, currentItem = null, currentTimeframe = '1d', currentCurrency = 'USD', ethToUsdRate = null;
+        let marketData = [], itemDetails = {}, orderBookData = [], totalMarketVolume24h = 0, currentUtcTime = new Date();
+        let allRecentTrades = [], tickerIndex = 0;
+        setInterval(() => { currentUtcTime = new Date(); }, 60000);
+        function getCurrentUtcTimestamp() { return Math.floor(currentUtcTime.getTime() / 1000); }
+
+        // Updated to work with new GraphQL API responses and grouped trades
+        async function loadRecentTradesForTicker() {
+            try {
+                const items = Object.keys(itemDetails);
+                if (!items.length) return [];
+                const allTrades = [];
+                
+                // Load trades from multiple items in parallel batches
+                const batchSize = 5;
+                for (let i = 0; i < items.length; i += batchSize) {
+                    const batch = items.slice(i, i + batchSize);
+                    const batchPromises = batch.map(async (itemId) => {
+                        try {
+                            // Get fewer trades since they're now grouped by tx
+                            const trades = await fetch(`/api/trades/${itemId}?limit=3`).then(res => res.json());
+                            if (trades && trades.length) {
+                                trades.forEach(trade => {
+                                    const itemInfo = getItemInfo(itemId);
+                                    // Since trades are now grouped, use the aggregated data
+                                    allTrades.push({
+                                        ...trade, 
+                                        itemId: itemId, 
+                                        itemName: itemInfo.name, 
+                                        itemIcon: itemInfo.image || itemInfo.icon, 
+                                        ethValue: trade.ethSpent, // Already calculated total
+                                        amount: trade.amount, // Already aggregated amount
+                                        timestamp: trade.timestamp
+                                    });
+                                });
+                            }
+                        } catch (error) { 
+                            console.error(`Failed to load trades for ${itemId}:`, error); 
+                        }
+                    });
+                    
+                    await Promise.all(batchPromises);
+                }
+                
+                allRecentTrades = allTrades.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 40);
+                console.log(`🎯 Loaded ${allRecentTrades.length} grouped trades for ticker`);
+                return allRecentTrades;
+            } catch (error) { 
+                console.error('Failed to load recent trades for ticker:', error); 
+                return []; 
+            }
+        }
+
+        const formatUsdPrice = (ethPrice) => {
+            if (!ethToUsdRate) return '0.00';
+            const usd = ethPrice * ethToUsdRate;
+            return usd < 0.0001 ? usd.toFixed(6) : usd < 0.01 ? usd.toFixed(4) : usd < 1 ? usd.toFixed(3) : usd.toFixed(2);
+        }
+
+        const updateTicker = () => {
+            if (!allRecentTrades.length) return;
+            const tickerContent = document.getElementById('ticker-content');
+            if (!tickerContent) return;
+            const trade = allRecentTrades[tickerIndex];
+            tickerContent.innerHTML = `<img src="${trade.itemIcon}" class="ticker-icon" alt="${trade.itemName}" /><span class="text-success">BOUGHT</span><span> ${trade.amount} ${trade.itemName} </span><span class="muted">FOR $${formatUsdPrice(trade.ethValue)}</span>`;
+            tickerIndex = (tickerIndex + 1) % allRecentTrades.length;
+        }
+
+        const initTicker = async () => {
+            await loadRecentTradesForTicker();
+            updateTicker();
+            setInterval(updateTicker, 5000);
+            setInterval(loadRecentTradesForTicker, 120000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            loadItemDetails().then(() => { loadMarkets(); initTicker(); });
+            setupEventListeners();
+            fetchEthToUsdRate();
+            setInterval(refreshData, 30000);
+        });
+
+        async function loadItemDetails() {
+            try { 
+                itemDetails = await fetch('/api/item-details').then(res => res.json());
+                populateTypeSelector();
+            } catch (error) { 
+                console.error('Failed to load item details:', error); 
+                itemDetails = {}; 
+            }
+        }
+
+        const getItemInfo = (itemId) => itemDetails[itemId] ? 
+            { name: itemDetails[itemId].name || `Item ${itemId}`, image: itemDetails[itemId].image || itemDetails[itemId].icon, icon: itemDetails[itemId].icon, type: itemDetails[itemId].type } :
+            { name: `Item ${itemId}`, image: null, icon: null, type: null };
+
+        function populateTypeSelector() {
+            const typeDropdown = document.getElementById('typeDropdown');
+            if (!typeDropdown) return;
+            
+            const types = [...new Set(Object.values(itemDetails).map(item => item.type).filter(type => type?.trim()))].sort();
+            typeDropdown.innerHTML = '<div class="dropdown-item" data-value="">All Types</div>' + 
+                types.map(type => `<div class="dropdown-item" data-value="${type}">${type}</div>`).join('');
+            
+            console.log(`📋 Populated ${types.length} item types:`, types);
+        }
+
+        function setupCustomDropdown() {
+            const typeSelector = document.getElementById('typeSelector');
+            const typeDropdown = document.getElementById('typeDropdown');
+            const selectedText = typeSelector.querySelector('.selected-text');
+            
+            typeSelector.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = typeDropdown.style.display === 'block';
+                typeDropdown.style.display = isOpen ? 'none' : 'block';
+                typeSelector.classList.toggle('open', !isOpen);
+            });
+            
+            typeDropdown.addEventListener('click', (e) => {
+                if (e.target.classList.contains('dropdown-item')) {
+                    selectedText.textContent = e.target.textContent;
+                    typeSelector.dataset.value = e.target.dataset.value;
+                    typeDropdown.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    typeDropdown.style.display = 'none';
+                    typeSelector.classList.remove('open');
+                    filterMarkets(document.getElementById('marketSearch').value);
+                }
+            });
+            
+            document.addEventListener('click', () => {
+                typeDropdown.style.display = 'none';
+                typeSelector.classList.remove('open');
+            });
+        }
+
+        const fetchEthToUsdRate = async () => {
+            try { 
+                ethToUsdRate = (await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd').then(res => res.json())).ethereum.usd;
+            } catch (error) { 
+                console.error('Could not fetch ETH to USD rate:', error); 
+                ethToUsdRate = 3500; 
+            }
+        }
+
+        function initChart() {
+            const chartContainer = document.getElementById('chart');
+            chart = LightweightCharts.createChart(chartContainer, {
+                autoSize: true,
+                height: 400,
+                layout: { background: { color: 'oklch(14.1% .005 285.823)' }, textColor: '#ffffff', fontFamily: 'Silkscreen, Courier New, monospace' },
+                grid: { vertLines: { color: 'rgba(255, 255, 255, 0.1)' }, horzLines: { color: 'rgba(255, 255, 255, 0.1)' } },
+                timeScale: { 
+                    borderColor: 'rgba(255, 255, 255, 0.1)', 
+                    timeVisible: true, 
+                    rightOffset: 0, 
+                    fixRightEdge: false, 
+                    fixLeftEdge: false,
+                    barSpacing: 6,
+                    lockVisibleTimeRangeOnResize: true
+                },
+                rightPriceScale: { 
+                    visible: true, 
+                    borderVisible: true, 
+                    borderColor: 'rgba(255, 255, 255, 0.3)', 
+                    scaleMargins: { top: 0.1, bottom: 0.25 }, 
+                    ticksVisible: true, 
+                    entireTextOnly: false, 
+                    minimumWidth: 80, 
+                    alignLabels: true, 
+                    autoScale: true 
+                },
+                leftPriceScale: { visible: false },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                localization: {
+                    priceFormatter: (price) => {
+                        if (price < 0.000001) return price.toFixed(10).replace(/\.?0+$/, '');
+                        if (price < 0.00001) return price.toFixed(8).replace(/\.?0+$/, '');
+                        if (price < 0.0001) return price.toFixed(7).replace(/\.?0+$/, '');
+                        if (price < 0.001) return price.toFixed(6).replace(/\.?0+$/, '');
+                        if (price < 0.01) return price.toFixed(5).replace(/\.?0+$/, '');
+                        if (price < 0.1) return price.toFixed(4).replace(/\.?0+$/, '');
+                        return price.toFixed(3).replace(/\.?0+$/, '');
+                    }
+                }
+            });
+            
+            candlestickSeries = chart.addCandlestickSeries({ 
+                upColor: '#4ade80', 
+                downColor: '#ef4444', 
+                borderVisible: false, 
+                priceScaleId: 'right',
+                priceFormat: { type: 'price', precision: 8, minMove: 0.00000001 }
+            });
+            lineSeries = chart.addLineSeries({ 
+                color: '#f59e0b', 
+                priceScaleId: 'right',
+                priceFormat: { type: 'price', precision: 8, minMove: 0.00000001 }
+            });
+            volumeSeries = chart.addHistogramSeries({ color: '#f59e0b', priceFormat: { type: 'volume' }, priceScaleId: '' });
+            volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+
+            let hoverTimeout;
+            chart.subscribeCrosshairMove(param => {
+                if (hoverTimeout) clearTimeout(hoverTimeout);
+                if (!param.time || !param.point) { hideChartTooltip(); return; }
+                hoverTimeout = setTimeout(() => {
+                    const data = param.seriesData;
+                    if (!data) return;
+                    const candleData = data.get(candlestickSeries);
+                    const lineData = data.get(lineSeries);
+                    if (candleData || lineData) {
+                        const priceInEth = candleData ? candleData.close : lineData.value;
+                        const actualEthPrice = currentCurrency === 'USD' && ethToUsdRate ? priceInEth / ethToUsdRate : priceInEth;
+                        fetchTimeframeData(param.time, actualEthPrice, priceInEth).then(timeframeData => {
+                            showChartTooltip(param.point.x, param.point.y, priceInEth, timeframeData.totalEthVolume, timeframeData.totalItemsSold);
+                        });
+                    }
+                }, 50);
+            });
+
+            async function fetchTimeframeData(timestamp, ethPrice, displayPrice) {
+                try { 
+                    const response = await fetch(`/api/timeframe-data/${currentItem}?timeframe=${currentTimeframe}&timestamp=${timestamp}`); 
+                    const data = await response.json(); 
+                    return { totalEthVolume: data.totalEthVolume || 0, totalItemsSold: data.totalItemsSold || 0 }; 
+                } catch (error) { 
+                    console.error('Failed to fetch timeframe data:', error); 
+                    return { totalEthVolume: 0, totalItemsSold: 0 }; 
+                }
+            }
+        }
+
+        function showChartTooltip(x, y, displayPrice, totalVolumeEth, totalItemsSold) {
+            let tooltip = document.getElementById('chart-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'chart-tooltip';
+                tooltip.style.cssText = `position: fixed; background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: calc(var(--s) * 2); font-size: 0.65rem; color: var(--fg); z-index: 1000; pointer-events: none; white-space: nowrap; font-family: 'Silkscreen', 'Courier New', monospace; box-shadow: 0 2px 8px rgba(0,0,0,0.3);`;
+                document.body.appendChild(tooltip);
+            }
+            const formattedPrice = formatPrice(displayPrice);
+            const volumeInDisplayCurrency = currentCurrency === 'USD' && ethToUsdRate ? totalVolumeEth * ethToUsdRate : totalVolumeEth;
+            const formattedVolume = formatPrice(volumeInDisplayCurrency);
+            tooltip.innerHTML = `<div>Price: ${formattedPrice} ${currentCurrency}</div><div>Total Volume: ${formattedVolume} ${currentCurrency}</div><div>Total Sold Items: ${totalItemsSold}</div>`;
+            const chartRect = document.getElementById('chart').getBoundingClientRect();
+            tooltip.style.left = `${chartRect.left + x + 10}px`;
+            tooltip.style.top = `${chartRect.top + y - 60}px`;
+            tooltip.style.display = 'block';
+        }
+
+        const hideChartTooltip = () => {
+            const tooltip = document.getElementById('chart-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
+        }
+
+        function setupEventListeners() {
+            document.getElementById('timeframeSelect').addEventListener('change', (e) => { currentTimeframe = e.target.value; if (currentItem) refreshData(); });
+            document.getElementById('marketSearch').addEventListener('input', (e) => filterMarkets(e.target.value));
+            setupCustomDropdown();
+            document.querySelectorAll('.chart-controls .chart-type-btn[data-type]').forEach(btn => { btn.addEventListener('click', (e) => { e.currentTarget.classList.toggle('active'); updateChartType(); }); });
+            document.querySelectorAll('#currencySelector .chart-type-btn').forEach(btn => { btn.addEventListener('click', (e) => { document.querySelectorAll('#currencySelector .chart-type-btn').forEach(b => b.classList.remove('active')); e.currentTarget.classList.add('active'); currentCurrency = e.currentTarget.dataset.currency; if (currentItem) refreshData(); updateTotalMarketVolumeDisplay(); }); });
+            document.querySelectorAll('.trading-tab').forEach(tab => { tab.addEventListener('click', (e) => { document.querySelectorAll('.trading-tab').forEach(t => t.classList.remove('active')); e.currentTarget.classList.add('active'); document.getElementById('buyTab').style.display = e.currentTarget.dataset.tab === 'buy' ? 'flex' : 'none'; document.getElementById('sellTab').style.display = e.currentTarget.dataset.tab === 'sell' ? 'flex' : 'none'; }); });
+            document.getElementById('buyAmountInput').addEventListener('input', (e) => { const value = Math.max(1, Math.min(3000, parseInt(e.target.value) || 1)); document.getElementById('buyAmountSlider').value = value; updateBuyInfo(); });
+            document.getElementById('buyAmountSlider').addEventListener('input', (e) => { document.getElementById('buyAmountInput').value = e.target.value; updateBuyInfo(); });
+            document.getElementById('sellAmountInput').addEventListener('input', (e) => { const value = Math.max(1, Math.min(3000, parseInt(e.target.value) || 1)); document.getElementById('sellAmountSlider').value = value; updateSellInfo(); });
+            document.getElementById('sellAmountSlider').addEventListener('input', (e) => { document.getElementById('sellAmountInput').value = e.target.value; updateSellInfo(); });
+            document.getElementById('sellPrice').addEventListener('input', updateSellInfo);
+        }
+
+        const convertPrice = (price) => (currentCurrency === 'USD' && ethToUsdRate) ? price * ethToUsdRate : price;
+
+        const formatPrice = (price) => {
+            if (currentCurrency === 'USD') return price < 0.01 ? price.toFixed(6) : price < 1 ? price.toFixed(4) : price.toFixed(2);
+            const precisions = [15,14,13,12,11,10,9,8,7,6,4];
+            const thresholds = [0.000000000001,0.00000000001,0.0000000001,0.000000001,0.00000001,0.0000001,0.000001,0.00001,0.0001,0.001,Infinity];
+            return price.toFixed(precisions[thresholds.findIndex(t => price < t)]);
+        }
+
+        // Updated to work with new GraphQL-based API and real market volume change
+        async function loadMarkets() {
+            try {
+                console.log('📊 Loading markets from GraphQL API...');
+                const [items, stats] = await Promise.all([
+                    fetch('/api/items').then(res => res.json()),
+                    fetch('/api/stats').then(res => res.json())
+                ]);
+                
+                console.log(`📦 Loaded ${items.length} items and ${stats.length} stats`);
+                
+                // Calculate total market volume from all items' 24h volume
+                totalMarketVolume24h = stats.reduce((total, stat) => total + (stat.totalEthVolume24h || 0), 0);
+                
+                // Get real market volume change from the first stat item (they all have the same market-wide data)
+                const marketVolumeChange = stats.length > 0 ? stats[0].marketVolumeChange24h || 0 : 0;
+                
+                marketData = items.map(itemId => {
+                    const itemStats = stats.find(s => s.itemId === itemId) || {};
+                    const itemInfo = getItemInfo(itemId);
+                    return { 
+                        ...itemInfo, 
+                        itemId, 
+                        volume: itemStats.totalItemsSold24h || 0, 
+                        volumeEth: itemStats.totalEthVolume24h || 0, 
+                        change24h: itemStats.priceChange24h || 0, // PRICE change for market list
+                        volumeChange24h: itemStats.volumeChange24h || 0, // VOLUME change for info blocks
+                        currentPrice: itemStats.currentPrice || 0, 
+                        floorPrice: itemStats.floorPrice || 0, // Floor price from orderbook
+                        price24hAgo: itemStats.price24hAgo || 0, 
+                        tradeCount: itemStats.tradeCount || 0,
+                        marketVolumeChange24h: marketVolumeChange
+                    };
+                }).sort((a, b) => b.volumeEth - a.volumeEth);
+                
+                console.log(`📊 Processed ${marketData.length} market items`);
+                console.log(`📊 Total Market Volume (24h): ${totalMarketVolume24h.toFixed(6)} ETH`);
+                console.log(`📊 Market Volume Change: ${marketVolumeChange.toFixed(2)}%`);
+                
+                renderMarketList();
+                updateTotalMarketVolumeDisplay();
+                updateMarketVolumeChange(marketVolumeChange);
+                
+                if (marketData.length > 0 && !currentItem) selectMarket(marketData[0].itemId);
+            } catch (error) { 
+                console.error('Failed to load markets:', error); 
+            }
+        }
+
+        function updateMarketVolumeChange(changePercent) {
+            const changeElement = document.getElementById('statMarketVolumeChange');
+            if (changePercent !== 0) {
+                changeElement.textContent = `${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%`;
+                changeElement.className = 'stat-change';
+                if (changePercent > 0) changeElement.classList.add('positive');
+                else if (changePercent < 0) changeElement.classList.add('negative');
+            } else {
+                changeElement.textContent = '-';
+                changeElement.className = 'stat-change';
+            }
+        } 
+
+        function updateTotalMarketVolumeDisplay() { 
+            document.getElementById('totalMarketVolume').textContent = `${formatPrice(convertPrice(totalMarketVolume24h))} ${currentCurrency}`; 
+        }
+
+        function renderMarketList() {
+            const marketList = document.getElementById('marketList');
+            marketList.innerHTML = marketData.map(market => {
+                const changeClass = market.change24h > 0 ? 'positive' : market.change24h < 0 ? 'negative' : 'neutral';
+                const iconUrl = market.image || market.icon;
+                const displayVolume = convertPrice(market.volumeEth);
+                const volumeText = `Vol: ${formatPrice(displayVolume)} ${currentCurrency}`;
+                const displayFloorPrice = convertPrice(market.floorPrice);
+                const floorPriceText = market.floorPrice > 0 ? `$${formatPrice(displayFloorPrice)}` : '-';
+                
+                // DEBUG: Log the values being used
+                console.log(`🔍 Market ${market.itemId}: Price change ${market.change24h.toFixed(2)}%, Volume change ${market.volumeChange24h ? market.volumeChange24h.toFixed(2) : 'undefined'}%`);
+                
+                return `<div class="market-item" data-item-id="${market.itemId}" onclick="selectMarket('${market.itemId}')"><div class="market-item-content"><div class="market-item-icon" style="background-image: url('${iconUrl || ''}');">${!iconUrl ? (market.name || '?').charAt(0) : ''}</div><div class="market-item-name">${market.name || 'Unknown Item'}</div></div><div class="market-item-details"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: calc(var(--s) * 0.25);"><span style="color: var(--muted-fg); font-size: 0.55rem;">${volumeText}</span><div style="display: flex; gap: calc(var(--s) * 1); align-items: center;"><span style="color: var(--success); font-size: 0.6rem;">${floorPriceText}</span><span class="market-change ${changeClass}" style="font-size: 0.6rem; opacity: 0.7;">${market.change24h.toFixed(2)}%</span></div></div></div></div>`;
+            }).join('');
+        }
+        
+        function filterMarkets(searchTerm = '') {
+            const typeSelector = document.getElementById('typeSelector');
+            const selectedType = typeSelector ? typeSelector.dataset.value : '';
+            
+            document.querySelectorAll('.market-item').forEach(item => {
+                const itemId = item.dataset.itemId;
+                const itemInfo = getItemInfo(itemId);
+                
+                const name = itemInfo.name || '';
+                const type = itemInfo.type || '';
+                
+                const matchesSearch = !searchTerm || name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesType = !selectedType || type === selectedType;
+                
+                item.style.display = (matchesSearch && matchesType) ? 'flex' : 'none';
+            });
+            
+            // Update visible count
+            const visibleItems = document.querySelectorAll('.market-item[style*="flex"]').length;
+            console.log(`🔍 Filtered markets: ${visibleItems} visible out of ${marketData.length} total (search: "${searchTerm}", type: "${selectedType}")`);
+        }
+
+        function selectMarket(itemId) {
+            document.querySelectorAll('.market-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`[data-item-id="${itemId}"]`)?.classList.add('active');
+            currentItem = itemId;
+            updateTradingInfo(itemId);
+            refreshData();
+        }
+
+        function updateTradingInfo(itemId) {
+            const itemInfo = getItemInfo(itemId);
+            document.getElementById('buyItemName').textContent = itemInfo.name;
+            document.getElementById('sellItemName').textContent = itemInfo.name;
+            const chartTitleEl = document.getElementById('chartPanelTitle');
+            const chartIconEl = document.getElementById('chartItemIcon');
+            if (chartTitleEl) chartTitleEl.textContent = itemInfo.name ? `${itemInfo.name} Chart` : 'Price Chart';
+            if (chartIconEl && itemInfo.image) { 
+                chartIconEl.style.backgroundImage = `url('${itemInfo.image}')`; 
+                chartIconEl.textContent = ''; 
+            } else if (chartIconEl) { 
+                chartIconEl.style.backgroundImage = ''; 
+                chartIconEl.textContent = itemInfo.name ? itemInfo.name.charAt(0) : '?'; 
+            }
+            
+            // Update first three stat icons with selected item's icon
+            ['statIcon1', 'statIcon2', 'statIcon3'].forEach(iconId => {
+                const statIconEl = document.getElementById(iconId);
+                if (statIconEl && itemInfo.icon) {
+                    statIconEl.style.backgroundImage = `url('${itemInfo.icon}')`;
+                    statIconEl.textContent = '';
+                } else if (statIconEl) {
+                    statIconEl.style.backgroundImage = '';
+                    statIconEl.textContent = itemInfo.name ? itemInfo.name.charAt(0) : '?';
+                }
+            });
+            
+            updateBuyInfo(); 
+            updateSellInfo();
+        }
+
+        function updateBuyInfo() {
+            const amount = parseInt(document.getElementById('buyAmountInput').value) || 0;
+            if (!orderBookData.length || !amount) { 
+                document.getElementById('buyTotalCost').textContent = '-'; 
+                return; 
+            }
+            let totalCost = 0, remainingAmount = amount;
+            for (const order of orderBookData) {
+                if (remainingAmount <= 0) break;
+                const orderAmount = Math.min(order.amount, remainingAmount);
+                totalCost += orderAmount * order.price;
+                remainingAmount -= orderAmount;
+            }
+            document.getElementById('buyTotalCost').textContent = `${formatPrice(convertPrice(totalCost))} ${currentCurrency}`;
+        }
+
+        function updateSellInfo() {
+            const amount = parseInt(document.getElementById('sellAmountInput').value) || 0;
+            const price = parseFloat(document.getElementById('sellPrice').value) || 0;
+            document.getElementById('sellBalance').textContent = '-'; // Remove fake balance
+            document.getElementById('sellTotalReceive').textContent = `${formatPrice(convertPrice(amount * price))} ${currentCurrency}`;
+        }
+
+        const executeBuy = () => alert('Buy action placeholder.');
+        const executeSell = () => alert('Sell action placeholder.');
+        const refreshChart = () => currentItem && (console.log('🔄 Manually refreshing chart data...'), updateChart());
+
+        const refreshData = async () => { 
+            if (!currentItem) return; 
+            console.log(`🔄 Refreshing data for item ${currentItem}...`);
+            await Promise.all([updateChart(), updateOrderBook(), updateStats(), updateLastTrades()]); 
+        }
+        
+        function aggregateToCandles(data, timeframe) {
+            const interval = { '1h': 3600, '4h': 14400, '1d': 86400 }[timeframe] * 1000;
+            const candles = {};
+            
+            // Sort data by timestamp to ensure proper processing
+            const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            sortedData.forEach(trade => {
+                const tradeTime = new Date(trade.timestamp).getTime();
+                const candleTime = Math.floor(tradeTime / interval) * interval / 1000;
+                
+                if (!candles[candleTime]) {
+                    candles[candleTime] = { 
+                        time: candleTime, 
+                        open: trade.price, 
+                        high: trade.price, 
+                        low: trade.price, 
+                        close: trade.price, 
+                        ethVolume: 0 
+                    };
+                }
+                
+                // Update OHLC values
+                candles[candleTime].high = Math.max(candles[candleTime].high, trade.price);
+                candles[candleTime].low = Math.min(candles[candleTime].low, trade.price);
+                candles[candleTime].close = trade.price; // Last trade in this candle becomes close
+                candles[candleTime].ethVolume += trade.ethVolume;
+            });
+            
+            const candleArray = Object.values(candles).sort((a, b) => a.time - b.time);
+            
+            // Fill in missing time gaps with previous close price to maintain continuity
+            if (candleArray.length > 0) {
+                const filledCandles = [];
+                const startTime = candleArray[0].time;
+                const endTime = Math.floor(Date.now() / 1000 / (interval / 1000)) * (interval / 1000);
+                
+                let lastPrice = candleArray[0].close;
+                
+                for (let time = startTime; time <= endTime; time += (interval / 1000)) {
+                    const existingCandle = candles[time];
+                    if (existingCandle) {
+                        filledCandles.push(existingCandle);
+                        lastPrice = existingCandle.close;
+                    } else {
+                        // Create empty candle with last known price to maintain chart continuity
+                        filledCandles.push({
+                            time: time,
+                            open: lastPrice,
+                            high: lastPrice,
+                            low: lastPrice,
+                            close: lastPrice,
+                            ethVolume: 0
+                        });
+                    }
+                }
+                
+                return filledCandles;
+            }
+            
+            return candleArray;
+        }
+
+        // Updated chart function to work with GraphQL API and fix date transitions
+        async function updateChart() {
+            try {
+                console.log(`📊 Updating chart for item ${currentItem} with timeframe ${currentTimeframe}`);
+                const data = await fetch(`/api/chart-data/${currentItem}?timeframe=${currentTimeframe}`).then(res => res.json());
+                
+                console.log(`📈 Received ${data.length} data points for chart`);
+                
+                if (data.length > 0) {
+                    const firstTrade = new Date(data[0].timestamp);
+                    const lastTrade = new Date(data[data.length - 1].timestamp);
+                    const now = new Date();
+                    console.log(`📅 Trade range: ${firstTrade.toDateString()} to ${lastTrade.toDateString()}`);
+                    console.log(`📅 Current date: ${now.toDateString()}`);
+                    
+                    // Check if last trade was more than 1 day ago
+                    const daysSinceLastTrade = (now - lastTrade) / (1000 * 60 * 60 * 24);
+                    console.log(`⏰ Days since last trade: ${daysSinceLastTrade.toFixed(2)}`);
+                }
+                
+                const candles = aggregateToCandles(data, currentTimeframe);
+                console.log(`🕯️ Generated ${candles.length} candles from ${data.length} trades`);
+                
+                if (!candles.length) { 
+                    console.log('⚠️ No candles to display');
+                    candlestickSeries.setData([]); 
+                    lineSeries.setData([]); 
+                    volumeSeries.setData([]); 
+                    return; 
+                }
+                
+                // Log first and last candle times
+                if (candles.length > 0) {
+                    const firstCandle = new Date(candles[0].time * 1000);
+                    const lastCandle = new Date(candles[candles.length - 1].time * 1000);
+                    console.log(`🕯️ Candle range: ${firstCandle.toDateString()} to ${lastCandle.toDateString()}`);
+                }
+                
+                const convertedCandles = candles.map(c => ({ 
+                    ...c, 
+                    open: convertPrice(c.open), 
+                    high: convertPrice(c.high), 
+                    low: convertPrice(c.low), 
+                    close: convertPrice(c.close) 
+                }));
+                
+                const convertedLineData = candles.map(c => ({ time: c.time, value: convertPrice(c.close) }));
+                const allPrices = convertedLineData.map(d => d.value).filter(p => p > 0);
+                const minPrice = Math.min(...allPrices);
+                
+                // Update series with proper precision based on price range
+                const seriesPrecision = currentCurrency === 'USD' ? 6 : 8;
+                const seriesMinMove = currentCurrency === 'USD' ? 0.000001 : 0.00000001;
+                
+                candlestickSeries.applyOptions({
+                    priceFormat: { type: 'price', precision: seriesPrecision, minMove: seriesMinMove }
+                });
+                lineSeries.applyOptions({
+                    priceFormat: { type: 'price', precision: seriesPrecision, minMove: seriesMinMove }
+                });
+                
+                const volumes = candles.map(c => c.ethVolume).filter(v => v > 0);
+                if (volumes.length) {
+                    const maxVolume = Math.max(...volumes);
+                    const minThreshold = maxVolume * 0.02;
+                    
+                    const volumeData = candles.map(c => {
+                        let scaledVolume = c.ethVolume;
+                        if (scaledVolume < minThreshold) {
+                            scaledVolume = maxVolume * 0.01;
+                        } else {
+                            scaledVolume = Math.sqrt(scaledVolume / maxVolume) * maxVolume;
+                        }
+                        return { time: c.time, value: scaledVolume, color: 'rgba(100, 100, 100, 0.7)' };
+                    });
+                    volumeSeries.setData(volumeData);
+                } else { 
+                    volumeSeries.setData([]); 
+                }
+                
+                candlestickSeries.setData(convertedCandles);
+                lineSeries.setData(convertedLineData);
+                window.currentCandleData = candles;
+                updateChartType();
+                
+                // Fit content and ensure chart uses full width
+                setTimeout(() => {
+                    chart.timeScale().fitContent();
+                    chart.timeScale().scrollToRealTime();
+                }, 100);
+                
+                console.log(`✅ Chart updated with ${convertedCandles.length} candles`);
+            } catch (error) { 
+                console.error('Failed to update chart:', error); 
+            }
+        }
+
+        const updateChartType = () => {
+            const showCandles = document.querySelector('.chart-type-btn[data-type="candlestick"]').classList.contains('active');
+            const showLine = document.querySelector('.chart-type-btn[data-type="line"]').classList.contains('active');
+            candlestickSeries.applyOptions({ visible: showCandles });
+            lineSeries.applyOptions({ visible: showLine });
+            if (!showCandles && !showLine) { 
+                document.querySelector('.chart-type-btn[data-type="line"]').classList.add('active'); 
+                lineSeries.applyOptions({ visible: true }); 
+            }
+        }
+        
+        // Updated orderbook function to work with GraphQL API and show all listings
+        async function updateOrderBook() {
+            try {
+                console.log(`📋 Updating orderbook for item ${currentItem}`);
+                const orderBook = await fetch(`/api/orderbook/${currentItem}`).then(res => res.json());
+                const orderbookBody = document.getElementById('orderbookBody');
+                
+                if (!orderBook.asks || !orderBook.asks.length) { 
+                    orderbookBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No orders</td></tr>'; 
+                    orderBookData = []; 
+                    return; 
+                }
+                
+                orderBookData = orderBook.asks;
+                console.log(`📋 Displaying ${orderBookData.length} price levels in orderbook`);
+                
+                const maxTotal = Math.max(...orderBookData.slice(0, 50).map(o => o.price * o.amount));
+                
+                orderbookBody.innerHTML = orderBookData.slice(0, 50).map(order => {
+                    const total = order.price * order.amount;
+                    const fillPercentage = (total / maxTotal) * 100;
+                    const gradient = `linear-gradient(to left, rgba(239, 68, 68, 0.15) ${fillPercentage}%, transparent ${fillPercentage}%)`;
+                    
+                    // Use the orders count from the aggregated data, or fallback to estimated count
+                    const ordersCount = order.orders || Math.max(1, Math.floor(order.amount / 10));
+                    
+                    return `<tr style="background: ${gradient};">
+                        <td class="price-col"><span>${formatPrice(convertPrice(order.price))}</span></td>
+                        <td class="amount-col"><span>${order.amount}</span></td>
+                        <td class="qty-col"><span>${ordersCount}</span></td>
+                        <td class="total-col"><span>${formatPrice(convertPrice(total))}</span></td>
+                    </tr>`;
+                }).join('');
+                
+                updateBuyInfo();
+                console.log(`📋 Orderbook updated with ${orderBookData.length} price levels`);
+            } catch (error) { 
+                console.error('Failed to update order book:', error); 
+            }
+        }
+
+        
+
+ // Updated stats function to work with GraphQL API
+
+
+
+  
+
+
+
+
+
+
+        async function updateStats() {
+            try {
+                console.log(`📊 Updating stats for item ${currentItem}`);
+                const stats = await fetch(`/api/stats/${currentItem}`).then(res => res.json());
+                if (!stats) return;
+               
+                
+                const volume24hEth = stats.totalEthVolume24h || 0;
+                const priceChange24h = stats.priceChange24h || 0;
+                const volumeChange24h = stats.volumeChange24h || 0; // VOLUME CHANGE FROM API
+                const itemsSold24h = stats.totalItemsSold24h || 0;
+                const itemsSoldChange24h = stats.itemsSoldChange24h || 0; // ITEMS SOLD CHANGE FROM API
+                
+                // Update individual item stats
+                document.getElementById('totalVolumeValue').textContent = volume24hEth > 0 ? 
+                    `${formatPrice(convertPrice(volume24hEth))} ${currentCurrency}` : '-';
+                document.getElementById('priceRange').textContent = (stats.minPrice && stats.maxPrice) ? 
+                    `${formatPrice(convertPrice(stats.minPrice))} - ${formatPrice(convertPrice(stats.maxPrice))}` : '-';
+                document.getElementById('itemSupply').textContent = '-';
+                
+                // CREATE volumeChangeText - THIS WAS MISSING!
+                const volumeChangeText = volumeChange24h !== 0 ? `${volumeChange24h.toFixed(2)}%` : '-';
+                const volumeChangeClass = volumeChange24h > 0 ? 'positive' : volumeChange24h < 0 ? 'negative' : '';
+                // USE volumeChangeText for "24h Volume" info block
+                document.getElementById('statVolumeChange').textContent = volumeChangeText;
+                document.getElementById('statVolumeChange').className = 'stat-change';
+                if (volumeChangeClass) document.getElementById('statVolumeChange').classList.add(volumeChangeClass);
+
+                // Supply change always shows "-" as requested
+                document.getElementById('statSupplyChange').textContent = '-';
+                document.getElementById('statSupplyChange').className = 'stat-change';
+                
+                // Price Range change always shows "-" for consistent spacing
+                document.getElementById('statPriceRangeChange').textContent = '-';
+                document.getElementById('statPriceRangeChange').className = 'stat-change';
+                
+                // 5th block - 24h Items Sold and its percentage change
+                document.getElementById('itemVolumeChange').textContent = itemsSold24h > 0 ? itemsSold24h.toString() : '-';
+                
+                const itemsSoldChangeText = itemsSoldChange24h !== 0 ? `${itemsSoldChange24h.toFixed(2)}%` : '-';
+                const itemsSoldChangeClass = itemsSoldChange24h > 0 ? 'positive' : itemsSoldChange24h < 0 ? 'negative' : '';
+                document.getElementById('statItemVolumeChange').textContent = itemsSoldChangeText;
+                document.getElementById('statItemVolumeChange').className = 'stat-change';
+                if (itemsSoldChangeClass) document.getElementById('statItemVolumeChange').classList.add(itemsSoldChangeClass);
+
+                
+                console.log(`📊 FIXED - Top blocks show VOLUME: ${volumeChangeText}, Market shows PRICE: ${priceChange24h.toFixed(2)}%`);
+                
+            } catch (error) { 
+                console.error('Failed to update stats:', error); 
+            }
+        }
+
+
+
+
+
+        // Updated trades function to work with GraphQL API
+        async function updateLastTrades() {
+            try {
+                console.log(`📊 Updating trades for item ${currentItem}`);
+                const trades = await fetch(`/api/trades/${currentItem}?limit=100`).then(res => res.json());
+                const tradesBody = document.getElementById('chartTradesBody');
+                
+                if (!trades || !trades.length) { 
+                    tradesBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No trades</td></tr>'; 
+                    return; 
+                }
+                
+                tradesBody.innerHTML = trades.slice(0, 100).map(trade => {
+                    const fullDateTime = new Date(trade.timestamp).toLocaleString([], {
+                        month: '2-digit', 
+                        day: '2-digit', 
+                        year: '2-digit',
+                        hour: '2-digit', 
+                        minute: '2-digit'
+                    });
+                    const shortBuyer = trade.buyer ? `${trade.buyer.slice(0, 6)}...${trade.buyer.slice(-4)}` : '-';
+                    const shortTx = trade.tx ? `${trade.tx.slice(0, 6)}...${trade.tx.slice(-4)}` : '-';
+                    const txLink = trade.tx ? `https://abscan.org/tx/${trade.tx}` : '#';
+                    return `<tr><td class="trade-time" style="text-align: left;">${fullDateTime}</td><td class="trade-amount" style="text-align: center;">${trade.amount}</td><td class="trade-price" style="text-align: right;">${formatPrice(convertPrice(trade.price))}</td><td class="trade-price" style="text-align: right;">${formatPrice(convertPrice(trade.ethSpent))}</td><td class="trade-buyer" style="text-align: center;">${shortBuyer}</td><td class="trade-hash" style="text-align: center;"><a href="${txLink}" target="_blank" rel="noopener">${shortTx}</a></td></tr>`;
+                }).join('');
+                
+                console.log(`📊 Trades updated with ${trades.length} trades for item ${currentItem}`);
+            } catch (error) { 
+                console.error('Failed to update last trades:', error); 
+            }
+        }
+
+        window.selectMarket = selectMarket;
+        window.executeBuy = executeBuy;
+        window.executeSell = executeSell;
+        window.refreshChart = refreshChart;
+    </script>
+</body>
+</html>
